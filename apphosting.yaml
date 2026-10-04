@@ -1,0 +1,19 @@
+kind: AppHostingYaml
+schemaVersion: v1
+runConfig:
+  minInstances: 0
+  maxInstances: 4
+  concurrency: 80
+  cpu: 1
+  memoryMiB: 1024
+
+env:
+  - variable: NODE_ENV
+    value: production
+  - variable: APP_URL
+    value: https://tienda-virtual.web.app
+  # Secrets managed via Google Cloud Secret Manager (integrated with Firebase App Hosting)
+  - variable: DATABASE_URL
+    secret: DATABASE_URL
+  - variable: AUTH_SECRET
+    secret: AUTH_SECRET
