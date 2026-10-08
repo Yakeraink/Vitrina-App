@@ -16,7 +16,12 @@ export default async function DashboardPage() {
   const { user, tenant, membership, memberships } = context;
 
   // Retrieve members belonging strictly to the current tenant via PostgreSQL RLS
-  const tenantMembers = await TenantService.getTenantMembers(tenant.id);
+  let tenantMembers: Awaited<ReturnType<typeof TenantService.getTenantMembers>> = [];
+  try {
+    tenantMembers = await TenantService.getTenantMembers(tenant.id);
+  } catch (error) {
+    console.error('[Dashboard TenantMembers Error]:', error);
+  }
 
   return (
     <div className="min-h-screen bg-[#090A1A] text-slate-100 flex flex-col selection:bg-vitrina-blue selection:text-white">

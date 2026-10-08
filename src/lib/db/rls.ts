@@ -1,27 +1,45 @@
 import { sql } from 'drizzle-orm';
 import { getDb } from './client';
 
+let cachedSupportsAuthenticated: boolean | null = null;
+
+async function checkAuthenticatedRole(db: Awaited<ReturnType<typeof getDb>>): Promise<boolean> {
+  if (cachedSupportsAuthenticated !== null) {
+    return cachedSupportsAuthenticated;
+  }
+  try {
+    const res = await db.execute(sql`
+      SELECT 1 FROM pg_roles WHERE rolname = 'authenticated' LIMIT 1;
+    `);
+    const rows = Array.isArray(res) ? res : (res as unknown as { rows?: unknown[] })?.rows ?? [];
+    cachedSupportsAuthenticated = rows.length > 0;
+  } catch {
+    cachedSupportsAuthenticated = false;
+  }
+  return cachedSupportsAuthenticated;
+}
+
 /**
  * Applies PostgreSQL Row-Level Security (RLS) to tenant-bound tables.
- * Also configures an unprivileged application role (app_user) so that
+ * Also configures the unprivileged application role (authenticated) so that
  * RLS is strictly enforced even when connecting initially as postgres.
  */
 export async function setupRLS() {
   const db = await getDb();
 
-  // 1. Create unprivileged app_user role if it does not exist
+  // 1. Create unprivileged authenticated role if it does not exist (standard in Supabase, created in local/PGlite)
   try {
     await db.execute(sql`
       DO $$
       BEGIN
-        IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'app_user') THEN
-          CREATE ROLE app_user WITH LOGIN NOSUPERUSER NOBYPASSRLS;
+        IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'authenticated') THEN
+          CREATE ROLE authenticated WITH LOGIN NOSUPERUSER NOBYPASSRLS;
         END IF;
       END $$;
     `);
-    await db.execute(sql`GRANT USAGE ON SCHEMA public TO app_user;`);
-    await db.execute(sql`GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO app_user;`);
-    await db.execute(sql`GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO app_user;`);
+    await db.execute(sql`GRANT USAGE ON SCHEMA public TO authenticated;`);
+    await db.execute(sql`GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO authenticated;`);
+    await db.execute(sql`GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO authenticated;`);
   } catch (error) {
     console.warn('[RLS Role Setup Notice]:', error);
   }
@@ -34,7 +52,7 @@ export async function setupRLS() {
     `DROP POLICY IF EXISTS tenant_isolation_memberships ON tenant_memberships;`,
     `CREATE POLICY tenant_isolation_memberships ON tenant_memberships
       FOR ALL
-      TO public, app_user
+      TO public, authenticated
       USING (
         tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
       )
@@ -48,7 +66,7 @@ export async function setupRLS() {
     `DROP POLICY IF EXISTS tenant_isolation_audit_logs ON tenant_audit_logs;`,
     `CREATE POLICY tenant_isolation_audit_logs ON tenant_audit_logs
       FOR ALL
-      TO public, app_user
+      TO public, authenticated
       USING (
         tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
       )
@@ -68,8 +86,8 @@ export async function setupRLS() {
 
 /**
  * Runs a transactional database operation with a strictly scoped tenant context.
- * Uses SET LOCAL ROLE app_user and SET LOCAL app.current_tenant_id, which guarantees
- * that RLS policies are strictly enforced and automatically cleaned up upon transaction completion.
+ * Sets SET LOCAL app.current_tenant_id and conditionally SET LOCAL ROLE authenticated,
+ * guaranteeing that RLS policies are strictly enforced and automatically cleaned up upon transaction completion.
  */
 export async function withTenantContext<T>(
   tenantId: string,
@@ -83,13 +101,12 @@ export async function withTenantContext<T>(
   }
 
   const db = await getDb();
+  const supportsAuthRole = await checkAuthenticatedRole(db);
 
   return await db.transaction(async (tx) => {
     // Switch to non-superuser application role to ensure RLS cannot be bypassed
-    try {
-      await tx.execute(sql.raw(`SET LOCAL ROLE app_user;`));
-    } catch {
-      // Role already unprivileged or not supported in specific environment
+    if (supportsAuthRole) {
+      await tx.execute(sql.raw(`SET LOCAL ROLE authenticated;`));
     }
 
     // Set transactional tenant parameter
@@ -101,7 +118,9 @@ export async function withTenantContext<T>(
       // Defense in depth: reset role and tenant parameter prior to connection release
       try {
         await tx.execute(sql.raw(`RESET app.current_tenant_id;`));
-        await tx.execute(sql.raw(`RESET ROLE;`));
+        if (supportsAuthRole) {
+          await tx.execute(sql.raw(`RESET ROLE;`));
+        }
       } catch {
         // Ignored if transaction already committed or aborted
       }

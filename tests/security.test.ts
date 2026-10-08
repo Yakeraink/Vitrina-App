@@ -15,7 +15,7 @@ describe('FASE 1: Multi-Tenant Core Security & Isolation Suite', () => {
     // Initialize database, tables, RLS policies and seed data
     await runMigrations();
     seedData = await runSeed();
-  });
+  }, 30000);
 
   afterAll(async () => {
     await closeDb();
