@@ -3,6 +3,7 @@
 import { useActionState } from 'react';
 import { loginAction } from '@/app/actions/auth';
 import Link from 'next/link';
+import { VitrinaLogo } from '@/components/brand/VitrinaLogo';
 
 export default function LoginPage() {
   const [state, formAction, isPending] = useActionState(loginAction, null);
@@ -17,20 +18,23 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col justify-center items-center p-6 text-slate-100">
-      <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-xl p-8 shadow-2xl">
+    <div className="min-h-screen bg-[#090A1A] flex flex-col justify-center items-center p-6 text-slate-100 relative overflow-hidden">
+      {/* Ambient Glows */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-gradient-to-b from-[#3F44CD]/20 to-transparent blur-[140px] pointer-events-none -z-10" />
+
+      <div className="w-full max-w-md bg-[#141638]/70 border border-white/10 backdrop-blur-2xl rounded-3xl p-8 sm:p-10 shadow-2xl relative">
         <div className="text-center mb-8">
-          <Link href="/" className="inline-block mb-3">
-            <span className="w-10 h-10 rounded-lg bg-emerald-500/20 border border-emerald-500 flex items-center justify-center font-bold text-emerald-400 mx-auto">
-              TV
-            </span>
+          <Link href="/" className="inline-block mb-4 transition transform hover:scale-105">
+            <VitrinaLogo size="md" theme="color" />
           </Link>
-          <h2 className="text-2xl font-bold text-white tracking-tight">Iniciar Sesión</h2>
-          <p className="text-slate-400 text-sm mt-1">Acceso seguro multi-tenant a la plataforma</p>
+          <h2 className="text-2xl font-serif font-bold text-white tracking-tight">Acceso a Comercios</h2>
+          <p className="text-slate-400 text-xs mt-1 font-light">
+            Plataforma multi-tenant con aislamiento PostgreSQL RLS
+          </p>
         </div>
 
         {state?.error && (
-          <div className="mb-6 p-3 rounded bg-rose-500/10 border border-rose-500/30 text-rose-400 text-sm">
+          <div className="mb-6 p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-medium">
             {state.error}
           </div>
         )}
@@ -39,7 +43,7 @@ export default function LoginPage() {
           <div>
             <label
               htmlFor="email"
-              className="block text-xs font-medium text-slate-300 uppercase tracking-wider mb-2"
+              className="block text-[11px] font-mono uppercase tracking-wider text-slate-300 mb-2"
             >
               Correo Electrónico
             </label>
@@ -48,15 +52,15 @@ export default function LoginPage() {
               name="email"
               type="email"
               required
-              placeholder="tu@negocio.com"
-              className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:border-emerald-500 transition"
+              placeholder="tu@vitrina.com"
+              className="w-full px-4 py-3 bg-[#0B0C1E]/80 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-vitrina-blue focus:ring-1 focus:ring-vitrina-blue transition duration-200"
             />
           </div>
 
           <div>
             <label
               htmlFor="password"
-              className="block text-xs font-medium text-slate-300 uppercase tracking-wider mb-2"
+              className="block text-[11px] font-mono uppercase tracking-wider text-slate-300 mb-2"
             >
               Contraseña
             </label>
@@ -66,39 +70,43 @@ export default function LoginPage() {
               type="password"
               required
               placeholder="••••••••"
-              className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:border-emerald-500 transition"
+              className="w-full px-4 py-3 bg-[#0B0C1E]/80 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-vitrina-blue focus:ring-1 focus:ring-vitrina-blue transition duration-200"
             />
           </div>
 
           <button
             type="submit"
             disabled={isPending}
-            className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-medium rounded-lg text-sm transition shadow-lg shadow-emerald-900/40"
+            className="w-full py-3.5 bg-vitrina-blue hover:bg-[#4D52DE] disabled:opacity-50 text-white font-medium rounded-xl text-sm transition-all duration-300 shadow-glow hover:shadow-glow-lg"
           >
-            {isPending ? 'Verificando...' : 'Entrar al Dashboard'}
+            {isPending ? 'Verificando Sesión Segura...' : 'Entrar a mi Vitrina'}
           </button>
         </form>
 
-        <div className="mt-8 pt-6 border-t border-slate-800">
-          <p className="text-xs text-slate-400 text-center mb-3">
-            Cuentas de prueba del entorno de desarrollo:
+        <div className="mt-8 pt-6 border-t border-white/[0.08]">
+          <p className="text-[11px] text-slate-400 text-center mb-3 font-mono">
+            Cuentas de prueba del entorno (Clic para rellenar):
           </p>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-2.5">
             <button
               type="button"
               onClick={() => fillCredentials('user-a@acme.com')}
-              className="p-2 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded text-left transition"
+              className="p-3 bg-[#0B0C1E]/60 hover:bg-[#18193F] border border-white/10 rounded-xl text-left transition duration-200 group"
             >
-              <div className="text-xs font-semibold text-emerald-400">Tenant A (Acme)</div>
-              <div className="text-[11px] text-slate-500 truncate">user-a@acme.com</div>
+              <div className="text-xs font-semibold text-white group-hover:text-vitrina-blue transition">
+                Tenant A (Acme)
+              </div>
+              <div className="text-[10px] text-slate-400 font-mono truncate">user-a@acme.com</div>
             </button>
             <button
               type="button"
               onClick={() => fillCredentials('user-b@beta.com')}
-              className="p-2 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded text-left transition"
+              className="p-3 bg-[#0B0C1E]/60 hover:bg-[#18193F] border border-white/10 rounded-xl text-left transition duration-200 group"
             >
-              <div className="text-xs font-semibold text-cyan-400">Tenant B (Beta)</div>
-              <div className="text-[11px] text-slate-500 truncate">user-b@beta.com</div>
+              <div className="text-xs font-semibold text-white group-hover:text-vitrina-blue transition">
+                Tenant B (Beta)
+              </div>
+              <div className="text-[10px] text-slate-400 font-mono truncate">user-b@beta.com</div>
             </button>
           </div>
         </div>

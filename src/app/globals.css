@@ -3,13 +3,47 @@
 @tailwind utilities;
 
 :root {
-  --background: #090d16;
-  --foreground: #f3f4f6;
+  --background: #090a1a;
+  --foreground: #f4f5f8;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-serif: 'Playfair Display', Georgia, serif;
+}
+
+html {
+  scroll-behavior: smooth;
+  color-scheme: dark;
 }
 
 body {
   background-color: var(--background);
   color: var(--foreground);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
   min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Apple-style gradient and ambient glow */
+.ambient-glow {
+  background: radial-gradient(circle at 50% -20%, rgba(63, 68, 205, 0.35) 0%, rgba(24, 25, 63, 0.2) 45%, transparent 70%);
+}
+
+.card-blur {
+  background: rgba(20, 22, 56, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(220, 231, 253, 0.08);
+}
+
+.text-gradient {
+  background: linear-gradient(180deg, #ffffff 0%, #b8bed5 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-blue {
+  background: linear-gradient(135deg, #8ba8ff 0%, #3f44cd 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
