@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { getDb } from './client';
 import { runMigrations } from './migrate';
-import { tenants, users, tenantMemberships } from './schema';
+import { tenants, users, tenantMemberships, products } from './schema';
 import { hashPassword } from '../security/password';
 
 export async function runSeed() {
@@ -106,6 +106,100 @@ export async function runSeed() {
       status: 'ACTIVE',
     });
     console.log('[Seed] Assigned User B to Tenant B as owner');
+  }
+
+  // 5. Seed initial products for Tenant A (Acme Store)
+  const existingProductsA = await db.select().from(products).where(eq(products.tenantId, tenantA.id)).limit(1);
+  if (existingProductsA.length === 0) {
+    await db.insert(products).values([
+      {
+        tenantId: tenantA.id,
+        name: 'Bolso Signature BrayLabs',
+        slug: 'bolso-signature-braylabs',
+        description: 'Confeccionado en lino premium y piel genuina. Acabados cobalto metálico con forro aterciopelado.',
+        price: 14500, // $145.00
+        compareAtPrice: 18900, // $189.00
+        imageUrl: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=800&q=80',
+        category: 'Bolsos',
+        stock: 14,
+        isFeatured: true,
+        status: 'ACTIVE',
+      },
+      {
+        tenantId: tenantA.id,
+        name: 'Reloj Minimalist Chrono Cobalt',
+        slug: 'reloj-minimalist-chrono-cobalt',
+        description: 'Cristal de zafiro irrayable, movimiento suizo de precisión y caja de acero pulido 316L.',
+        price: 28000, // $280.00
+        compareAtPrice: 32000,
+        imageUrl: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80',
+        category: 'Relojes',
+        stock: 8,
+        isFeatured: true,
+        status: 'ACTIVE',
+      },
+      {
+        tenantId: tenantA.id,
+        name: 'Sneakers Obsidian Leather',
+        slug: 'sneakers-obsidian-leather',
+        description: 'Calzado ergonómico de piel monocromática con suela de amortiguación cloud comfort.',
+        price: 19500, // $195.00
+        compareAtPrice: 22000,
+        imageUrl: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&w=800&q=80',
+        category: 'Calzado',
+        stock: 22,
+        isFeatured: true,
+        status: 'ACTIVE',
+      },
+      {
+        tenantId: tenantA.id,
+        name: 'Gafas de Sol Titanium Edition',
+        slug: 'gafas-sol-titanium-edition',
+        description: 'Montura de titanio aeroespacial con cristales polarizados de protección UV400 completa.',
+        price: 11000, // $110.00
+        compareAtPrice: 14000,
+        imageUrl: 'https://images.unsplash.com/photo-1511499767150-a48a237f0083?auto=format&fit=crop&w=800&q=80',
+        category: 'Accesorios',
+        stock: 15,
+        isFeatured: false,
+        status: 'ACTIVE',
+      },
+    ]);
+    console.log('[Seed] Seeded 4 luxury catalog products for Tenant A');
+  }
+
+  // 6. Seed initial products for Tenant B (Beta Shop)
+  const existingProductsB = await db.select().from(products).where(eq(products.tenantId, tenantB.id)).limit(1);
+  if (existingProductsB.length === 0) {
+    await db.insert(products).values([
+      {
+        tenantId: tenantB.id,
+        name: 'Camisa Silk Minimalist Pure',
+        slug: 'camisa-silk-minimalist-pure',
+        description: 'Seda natural 100% transpirable con corte moderno regular y botones de nácar.',
+        price: 12000, // $120.00
+        compareAtPrice: 15000,
+        imageUrl: 'https://images.unsplash.com/photo-1598033129183-c4f50c736f10?auto=format&fit=crop&w=800&q=80',
+        category: 'Ropa',
+        stock: 18,
+        isFeatured: true,
+        status: 'ACTIVE',
+      },
+      {
+        tenantId: tenantB.id,
+        name: 'Cartera Minimalist Cardholder',
+        slug: 'cartera-minimalist-cardholder',
+        description: 'Billetera ultrafina con bloqueo RFID y compartimento de expulsión rápida para 6 tarjetas.',
+        price: 6500, // $65.00
+        compareAtPrice: 8500,
+        imageUrl: 'https://images.unsplash.com/photo-1627123424574-724758594e93?auto=format&fit=crop&w=800&q=80',
+        category: 'Accesorios',
+        stock: 30,
+        isFeatured: true,
+        status: 'ACTIVE',
+      },
+    ]);
+    console.log('[Seed] Seeded 2 products for Tenant B');
   }
 
   console.log('[Seed] Multi-tenant seed completed successfully.');

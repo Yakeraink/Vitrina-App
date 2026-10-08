@@ -3,3 +3,5 @@ export * from './users';
 export * from './memberships';
 export * from './sessions';
 export * from './audit';
+export * from './products';
+export * from './orders';

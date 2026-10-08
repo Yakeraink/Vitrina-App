@@ -88,7 +88,52 @@ export async function runMigrations() {
     );
   `);
 
-  // 6. Setup Row-Level Security
+  // 6. Table: products
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS products (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+      name TEXT NOT NULL,
+      slug TEXT NOT NULL,
+      description TEXT,
+      price INTEGER NOT NULL,
+      compare_at_price INTEGER,
+      image_url TEXT NOT NULL,
+      category TEXT NOT NULL DEFAULT 'General',
+      stock INTEGER NOT NULL DEFAULT 10,
+      is_featured BOOLEAN NOT NULL DEFAULT false,
+      status TEXT NOT NULL DEFAULT 'ACTIVE',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+
+  await db.execute(sql`
+    CREATE INDEX IF NOT EXISTS products_tenant_idx ON products(tenant_id);
+  `);
+
+  // 7. Table: orders
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS orders (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+      order_number TEXT NOT NULL,
+      customer_name TEXT NOT NULL,
+      customer_email TEXT NOT NULL,
+      customer_phone TEXT,
+      items JSONB NOT NULL,
+      total_amount INTEGER NOT NULL,
+      status TEXT NOT NULL DEFAULT 'PENDING',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+
+  await db.execute(sql`
+    CREATE INDEX IF NOT EXISTS orders_tenant_idx ON orders(tenant_id);
+  `);
+
+  // 8. Setup Row-Level Security
   console.log('[Migration] Applying PostgreSQL Row-Level Security policies...');
   await setupRLS();
 

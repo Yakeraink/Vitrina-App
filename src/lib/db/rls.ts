@@ -73,6 +73,32 @@ export async function setupRLS() {
       WITH CHECK (
         tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
       );`,
+    // Table: products
+    `ALTER TABLE products ENABLE ROW LEVEL SECURITY;`,
+    `DROP POLICY IF EXISTS tenant_isolation_products ON products;`,
+    `CREATE POLICY tenant_isolation_products ON products
+      FOR ALL
+      TO public, authenticated
+      USING (
+        tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
+        OR status = 'ACTIVE'
+      )
+      WITH CHECK (
+        tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
+      );`,
+
+    // Table: orders
+    `ALTER TABLE orders ENABLE ROW LEVEL SECURITY;`,
+    `DROP POLICY IF EXISTS tenant_isolation_orders ON orders;`,
+    `CREATE POLICY tenant_isolation_orders ON orders
+      FOR ALL
+      TO public, authenticated
+      USING (
+        tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
+      )
+      WITH CHECK (
+        tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
+      );`,
   ];
 
   for (const statement of rlsStatements) {
