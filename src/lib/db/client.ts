@@ -8,19 +8,38 @@ let dbInstance: ReturnType<typeof drizzle<typeof schema>> | null = null;
 // Support for PGlite in-memory fallback during test/zero-config environments
 let pgliteInstance: unknown = null;
 
+/**
+ * Automatically normalizes direct Supabase URLs (IPv6 only) to Supabase's
+ * IPv4-compatible Connection Pooler (Supavisor) on port 6543.
+ * Prevents "getaddrinfo ENOTFOUND" errors on serverless platforms like Vercel.
+ */
+function normalizeDatabaseUrl(rawUrl: string): string {
+  const match = rawUrl.match(/db\.([a-z0-9]+)\.supabase\.co/);
+  if (match) {
+    const projectRef = match[1];
+    return rawUrl
+      .replace(`db.${projectRef}.supabase.co:5432`, `aws-0-us-east-1.pooler.supabase.com:6543`)
+      .replace(`db.${projectRef}.supabase.co`, `aws-0-us-east-1.pooler.supabase.com:6543`)
+      .replace(`://postgres:`, `://postgres.${projectRef}:`);
+  }
+  return rawUrl;
+}
+
 export async function getDb() {
   if (dbInstance) {
     return dbInstance;
   }
 
-  const databaseUrl = process.env.DATABASE_URL;
+  const rawUrl = process.env.DATABASE_URL;
 
-  if (databaseUrl && !databaseUrl.includes('placeholder')) {
+  if (rawUrl && !rawUrl.includes('placeholder')) {
+    const databaseUrl = normalizeDatabaseUrl(rawUrl);
     try {
       client = postgres(databaseUrl, {
         max: 10,
         idle_timeout: 20,
         connect_timeout: 10,
+        ssl: databaseUrl.includes('supabase.co') || databaseUrl.includes('pooler.supabase.com') ? 'require' : undefined,
       });
       dbInstance = drizzle(client, { schema });
       return dbInstance;
